@@ -55,7 +55,7 @@ def compose_image(logo, job_title, details, img_width, img_height):
 
     # Resize and paste logo at top-center
     logo_size = int(img_width * 0.15)
-    logo = logo.resize((logo_size, logo_size), Image.ANTIALIAS)
+    logo = logo.resize((logo_size, logo_size), Image.LANCZOS)
     logo_x = (img_width - logo_size)//2
     logo_y = 30
     img.paste(logo, (logo_x, logo_y), logo)
@@ -141,3 +141,4 @@ if st.button("Generate Image"):
             file_name=f"{company.replace(' ', '_')}_JobPost.png",
             mime="image/png"
         )
+
