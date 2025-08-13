@@ -40,7 +40,7 @@ def fetch_logo_with_fallback(company_name, api_key, cse_id):
 
     # Fallback to Clearbit Logo API based on domain guess
     try:
-        domain_guess = company_name.replace(' ', '').lower() + ".com"
+        domain_guess = company_name.replace(' ', '').lower() #+ ".com"
         clearbit_url = f"https://logo.clearbit.com/{domain_guess}"
         response = requests.get(clearbit_url, timeout=5)
         if response.status_code == 200:
@@ -118,7 +118,7 @@ def draw_multiline_text(draw, text, position, font, fill, max_width):
     return y
 
 # Compose final job post image with logo and extracted details
-def compose_image(logo, fields, img_width, img_height):
+def compose_image(logo, fields, img_width, img_height, font_sizes):
     background_color = (245, 250, 255)
     img = Image.new('RGB', (img_width, img_height), background_color)
     draw = ImageDraw.Draw(img)
@@ -130,11 +130,11 @@ def compose_image(logo, fields, img_width, img_height):
     logo_y = 40
     img.paste(logo, (logo_x, logo_y), logo)
 
-    # Load fonts
-    title_font = load_font("arialbd.ttf", size=int(img_width * 0.06))
-    heading_font = load_font("arialbd.ttf", size=int(img_width * 0.045))
-    detail_font = load_font("arial.ttf", size=int(img_width * 0.035))
-    small_font = load_font("arial.ttf", size=int(img_width * 0.03))
+    # Load fonts using the given font sizes mapping
+    title_font = load_font("arialbd.ttf", font_sizes['title'])
+    heading_font = load_font("arialbd.ttf", font_sizes['heading'])
+    detail_font = load_font("arial.ttf", font_sizes['detail'])
+    small_font = load_font("arial.ttf", max(12, font_sizes['detail'] - 10))  # footer smaller
 
     y = logo_y + logo_size + 30
 
@@ -164,18 +164,33 @@ def compose_image(logo, fields, img_width, img_height):
 
     return img
 
+# Suggested font sizes for each image size and text category
+FONT_SIZES_MAP = {
+    "Instagram Post (1080x1080)": {'title': 70, 'heading': 60, 'detail': 50},
+    "Instagram Story (1080x1920)": {'title': 90, 'heading': 80, 'detail': 60},
+    "LinkedIn Post (1200x627)": {'title': 60, 'heading': 50, 'detail': 40},
+    "Twitter Post (1024x512)": {'title': 50, 'heading': 40, 'detail': 30}
+}
+
 # Streamlit UI and logic
 st.set_page_config(page_title="AI Job Post Image Generator", layout="centered")
 st.title("AI Job Post Image Generator")
 
 with st.form("job_form"):
     text_input = st.text_area("Paste your job post details text here", height=250)
-    img_size = st.selectbox("Select Image Size", ("Instagram Post (1080x1080)", "Instagram Story (1080x1920)", "LinkedIn Post (1200x627)"))
+    img_size = st.selectbox("Select Image Size", list(FONT_SIZES_MAP.keys()))
     submitted = st.form_submit_button("Generate Image")
 
 # Retrieve API key and CSE ID from Streamlit secrets
 GOOGLE_API_KEY = st.secrets.get("GOOGLE_API_KEY", "")
 GOOGLE_CSE_ID = st.secrets.get("GOOGLE_CSE_ID", "")
+
+SIZE_MAP = {
+    "Instagram Post (1080x1080)": (1080, 1080),
+    "Instagram Story (1080x1920)": (1080, 1920),
+    "LinkedIn Post (1200x627)": (1200, 627),
+    "Twitter Post (1024x512)": (1024, 512)
+}
 
 if submitted:
     with st.spinner("Extracting details and generating image..."):
@@ -184,14 +199,10 @@ if submitted:
 
         logo = fetch_logo_with_fallback(company_name, GOOGLE_API_KEY, GOOGLE_CSE_ID)
 
-        size_map = {
-            "Instagram Post (1080x1080)": (1080, 1080),
-            "Instagram Story (1080x1920)": (1080, 1920),
-            "LinkedIn Post (1200x627)": (1200, 627)
-        }
-        img_width, img_height = size_map[img_size]
+        img_width, img_height = SIZE_MAP[img_size]
+        font_sizes = FONT_SIZES_MAP[img_size]
 
-        result_img = compose_image(logo, fields, img_width, img_height)
+        result_img = compose_image(logo, fields, img_width, img_height, font_sizes)
         st.image(result_img, caption="Generated Job Post Image", use_column_width=True)
 
         buf = BytesIO()
