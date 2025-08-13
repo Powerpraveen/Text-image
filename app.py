@@ -40,7 +40,7 @@ def fetch_logo_with_fallback(company_name, api_key, cse_id):
 
     # Fallback to Clearbit Logo API based on domain guess
     try:
-        domain_guess = company_name.replace(' ', '').lower() #+ ".com"
+        domain_guess = company_name.replace(' ', '').lower() + ".com"
         clearbit_url = f"https://logo.clearbit.com/{domain_guess}"
         response = requests.get(clearbit_url, timeout=5)
         if response.status_code == 200:
@@ -134,16 +134,16 @@ def compose_image(logo, fields, img_width, img_height, font_sizes):
     title_font = load_font("arialbd.ttf", font_sizes['title'])
     heading_font = load_font("arialbd.ttf", font_sizes['heading'])
     detail_font = load_font("arial.ttf", font_sizes['detail'])
-    small_font = load_font("arial.ttf", max(12, font_sizes['detail'] - 10))  # footer smaller
+    small_font = load_font("arial.ttf", max(16, font_sizes['detail'] - 10))  # footer smaller
 
-    y = logo_y + logo_size + 30
+    y = logo_y + logo_size + 40
 
     # Draw title centered
     title = fields.get("title", "Job Opening")
     bbox = draw.textbbox((0,0), title, font=title_font)
     w = bbox[2] - bbox[0]
     draw.text(((img_width - w) // 2, y), title, fill=(27,107,221), font=title_font)
-    y += bbox[3] - bbox[1] + 40
+    y += bbox[3] - bbox[1] + 50
 
     # Draw other fields if present
     max_text_width = int(img_width * 0.85)
@@ -153,10 +153,10 @@ def compose_image(logo, fields, img_width, img_height, font_sizes):
             value = fields[key]
             y = draw_multiline_text(draw, heading, (40, y), heading_font, (224,60,60), max_text_width)
             y = draw_multiline_text(draw, value, (60, y), detail_font, (72,72,75), max_text_width)
-            y += 20
+            y += 30
 
     # Footer with credit
-    footer_height = int(img_height * 0.05)
+    footer_height = int(img_height * 0.06)
     draw.rectangle([0, img_height - footer_height, img_width, img_height], fill=(230, 230, 230))
     footer_text = "🔗 Generated with AI Job Post Generator"
     bbox = draw.textbbox((0,0), footer_text, font=small_font)
@@ -164,15 +164,14 @@ def compose_image(logo, fields, img_width, img_height, font_sizes):
 
     return img
 
-# Suggested font sizes for each image size and text category
+# Significantly increased font sizes for better readability especially stories
 FONT_SIZES_MAP = {
     "Instagram Post (1080x1080)": {'title': 70, 'heading': 60, 'detail': 50},
-    "Instagram Story (1080x1920)": {'title': 90, 'heading': 80, 'detail': 60},
+    "Instagram Story (1080x1920)": {'title': 120, 'heading': 100, 'detail': 80},
     "LinkedIn Post (1200x627)": {'title': 60, 'heading': 50, 'detail': 40},
     "Twitter Post (1024x512)": {'title': 50, 'heading': 40, 'detail': 30}
 }
 
-# Streamlit UI and logic
 st.set_page_config(page_title="AI Job Post Image Generator", layout="centered")
 st.title("AI Job Post Image Generator")
 
